@@ -8,7 +8,7 @@ import * as objects from 'vs/base/common/objects';
 import * as nls from 'vs/nls';
 import { URI } from 'vs/base/common/uri';
 import { IStateService } from 'vs/platform/state/common/state';
-import { screen, BrowserWindow, systemPreferences, app, TouchBar, nativeImage } from 'electron';
+import { screen, BrowserWindow, systemPreferences, app, TouchBar, nativeImage, ipcMain } from 'electron';
 import { IEnvironmentService, ParsedArgs } from 'vs/platform/environment/common/environment';
 import { ILogService } from 'vs/platform/log/common/log';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
@@ -306,7 +306,9 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 	}
 
 	private registerListeners(): void {
-
+		ipcMain.on("start-test", () => {
+			this._win.loadURL(this.bindURL());
+		});
 		// Prevent loading of svgs
 		this._win.webContents.session.webRequest.onBeforeRequest(null!, (details, callback) => {
 			if (details.url.indexOf('.svg') > 0) {
@@ -513,8 +515,9 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 
 		// Load URL
 		perf.mark('main:loadWindow');
-		this._win.loadURL(this.getUrl(configuration));
-
+		this.bindURL = this.getUrl.bind(this, configuration);
+		this._win.loadURL(`${require.toUrl('vs/code/electron-browser/evaluation/test.html')}`);
+		this._win.webContents.openDevTools();
 		// Make window visible if it did not open in N seconds because this indicates an error
 		// Only do this when running out of sources and not when running tests
 		if (!this.environmentService.isBuilt && !this.environmentService.extensionTestsPath) {
@@ -618,6 +621,7 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 	}
 
 	private doGetUrl(config: object): string {
+		// console.log(`${require.toUrl('vs/code/electron-browser/workbench/workbench.html')}?config=${encodeURIComponent(JSON.stringify(config))}`);
 		return `${require.toUrl('vs/code/electron-browser/workbench/workbench.html')}?config=${encodeURIComponent(JSON.stringify(config))}`;
 	}
 

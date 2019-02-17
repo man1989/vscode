@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import 'vs/code/code.main';
-import { app, dialog } from 'electron';
+import { app, dialog, BrowserWindow, ipcMain as ipc } from 'electron';
 import { assign } from 'vs/base/common/objects';
 import * as platform from 'vs/base/common/platform';
 import product from 'vs/platform/node/product';
@@ -37,10 +37,12 @@ import { BufferLogService } from 'vs/platform/log/common/bufferLog';
 import { uploadLogs } from 'vs/code/electron-main/logUploader';
 import { setUnexpectedErrorHandler } from 'vs/base/common/errors';
 import { createWaitMarkerFile } from 'vs/code/node/wait';
+let w = null;
 
 class ExpectedError extends Error {
 	readonly isExpected = true;
 }
+
 
 function setupIPC(accessor: ServicesAccessor): Promise<Server> {
 	const logService = accessor.get(ILogService);
@@ -262,8 +264,7 @@ function patchEnvironment(environmentService: IEnvironmentService): typeof proce
 	return instanceEnvironment;
 }
 
-function startup(args: ParsedArgs): void {
-
+function startup(args: ParsedArgs, w: any): void {
 	// We need to buffer the spdlog logs until we are sure
 	// we are the only instance running, otherwise we'll have concurrent
 	// log file access on Windows (https://github.com/Microsoft/vscode/issues/41218)
@@ -289,7 +290,7 @@ function startup(args: ParsedArgs): void {
 			.then(mainIpcServer => {
 				bufferLogService.logger = createSpdLogService('main', bufferLogService.getLevel(), environmentService.logsPath);
 
-				return instantiationService.createInstance(CodeApplication, mainIpcServer, instanceEnvironment).startup();
+				return instantiationService.createInstance(CodeApplication, mainIpcServer, instanceEnvironment).startup(w);
 			});
 	}).then(null, err => instantiationService.invokeFunction(quit, err));
 }
@@ -331,8 +332,7 @@ function initServices(environmentService: IEnvironmentService, stateService: Sta
 	return Promise.all([environmentServiceInitialization, stateServiceInitialization]);
 }
 
-function main(): void {
-
+function main(w: any): void {
 	// Set the error handler early enough so that we are not getting the
 	// default electron error dialog popping up
 	setUnexpectedErrorHandler(err => console.error(err));
@@ -363,14 +363,23 @@ function main(): void {
 				args.waitMarkerFilePath = waitMarkerFilePath;
 			}
 
-			startup(args);
+			startup(args, w);
 		});
 	}
 
 	// Otherwise just startup normally
 	else {
-		startup(args);
+		startup(args, w);
 	}
 }
 
-main();
+function openMainWindow(): void {
+	w = new BrowserWindow();
+	let url = require.toUrl("vs/code/electron-browser/evaluation/test.html");
+	w.loadURL(url);
+	w.webContents.openDevTools();
+}
+
+// openMainWindow();
+main("");
+

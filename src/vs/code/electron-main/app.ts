@@ -256,8 +256,8 @@ export class CodeApplication extends Disposable {
 			}
 		});
 
-		ipc.on('vscode:toggleDevTools', (event: Event) => event.sender.toggleDevTools());
-		ipc.on('vscode:openDevTools', (event: Event) => event.sender.openDevTools());
+		// ipc.on('vscode:toggleDevTools', (event: Event) => event.sender.toggleDevTools());
+		// ipc.on('vscode:openDevTools', (event: Event) => event.sender.openDevTools());
 
 		ipc.on('vscode:reloadWindow', (event: Event) => event.sender.reload());
 
@@ -297,7 +297,7 @@ export class CodeApplication extends Disposable {
 		}
 	}
 
-	startup(): Promise<void> {
+	startup(w: any): Promise<void> {
 		this.logService.debug('Starting VS Code');
 		this.logService.debug(`from: ${this.environmentService.appRoot}`);
 		this.logService.debug('args:', this.environmentService.args);
@@ -364,12 +364,19 @@ export class CodeApplication extends Disposable {
 
 		// Resolve unique machine ID
 		this.logService.trace('Resolving machine identifier...');
-		const resolvedMachineId = this.resolveMachineId();
-		if (typeof resolvedMachineId === 'string') {
-			return startupWithMachineId(resolvedMachineId);
-		} else {
-			return resolvedMachineId.then(machineId => startupWithMachineId(machineId));
-		}
+		const resolvedMachineId = Promise.resolve(this.resolveMachineId());
+		// resolvedMachineId
+		// if (typeof resolvedMachineId === 'string') {
+		// 	return startupWithMachineId(resolvedMachineId);
+		// } else {
+		return resolvedMachineId.then(machineId => startupWithMachineId(machineId)).then((windows) => {
+			w && w.close();
+			return windows;
+		}).catch((err) => {
+			w && w.close();
+			return Promise.reject(err);
+		});
+		// }
 	}
 
 	private resolveMachineId(): string | Promise<string> {

@@ -7,7 +7,7 @@
 
 import 'vs/editor/editor.all';
 
-import 'vs/workbench/api/electron-browser/extensionHost.contribution';
+// import 'vs/workbench/api/electron-browser/extensionHost.contribution';
 
 import 'vs/workbench/electron-browser/main.contribution';
 import 'vs/workbench/browser/workbench.contribution';
@@ -30,9 +30,9 @@ import 'vs/workbench/browser/parts/quickinput/quickInputActions';
 
 //#region --- API Extension Points
 
-import 'vs/workbench/api/common/menusExtensionPoint';
-import 'vs/workbench/api/common/configurationExtensionPoint';
-import 'vs/workbench/api/browser/viewsExtensionPoint';
+// import 'vs/workbench/api/common/menusExtensionPoint';
+// import 'vs/workbench/api/common/configurationExtensionPoint';
+// import 'vs/workbench/api/browser/viewsExtensionPoint';
 
 //#endregion
 
@@ -104,7 +104,7 @@ import 'vs/workbench/contrib/url/electron-browser/url.contribution';
 import 'vs/workbench/contrib/webview/electron-browser/webview.contribution';
 
 // Extensions Management
-import 'vs/workbench/contrib/extensions/electron-browser/extensions.contribution';
+// import 'vs/workbench/contrib/extensions/electron-browser/extensions.contribution';
 import 'vs/workbench/contrib/extensions/browser/extensionsQuickOpen';
 import 'vs/workbench/contrib/extensions/electron-browser/extensionsViewlet';
 

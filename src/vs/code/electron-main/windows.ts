@@ -177,6 +177,7 @@ export class WindowsManager implements IWindowsMainService {
 
 	private registerListeners(): void {
 
+
 		// React to workbench ready events from windows
 		ipc.on('vscode:workbenchReady', (event: any, windowId: number) => {
 			this.logService.trace('IPC#vscode-workbenchReady');
@@ -333,6 +334,9 @@ export class WindowsManager implements IWindowsMainService {
 		};
 	}
 
+	startCode(openConfig: IOpenConfiguration) {
+
+	}
 	open(openConfig: IOpenConfiguration): ICodeWindow[] {
 		this.logService.trace('windowsManager#open');
 		openConfig = this.validateOpenConfig(openConfig);
@@ -1503,8 +1507,21 @@ export class WindowsManager implements IWindowsMainService {
 		if (!windowClosing && !windowLoading) {
 			return; // only interested when window is closing or loading
 		}
-
 		const workspace = e.window.openedWorkspace;
+		if (windowClosing) {
+			e.veto(this.workspacesManager.promptBeforeSubmit(this.getWindowById(e.window.id), workspace).then((veto): boolean | Promise<boolean> => {
+				if (veto) {
+					return veto;
+				}
+
+				// Bug in electron: somehow we need this timeout so that the window closes properly. That
+				// might be related to the fact that the untitled workspace prompt shows up async and this
+				// code can execute before the dialog is fully closed which then blocks the window from closing.
+				// Issue: https://github.com/Microsoft/vscode/issues/41989
+				return timeout(0).then(() => veto);
+			}));
+		}
+		// const workspace = e.window.openedWorkspace;
 		if (!workspace || !this.workspacesMainService.isUntitledWorkspace(workspace)) {
 			return; // only care about untitled workspaces to ask for saving
 		}
@@ -2051,6 +2068,52 @@ class WorkspacesManager {
 		});
 	}
 
+	promptBeforeSubmit(window: ICodeWindow | undefined, workspace: IWorkspaceIdentifier): Promise<boolean> {
+		enum ConfirmResult {
+			SUBMIT,
+			CONTINUE
+		}
+
+		const submit = { label: mnemonicButtonLabel(localize({ key: 'Submit', comment: ['&& denotes a mnemonic'] }, "&&Submit")), result: ConfirmResult.SUBMIT };
+		const cancel = { label: localize('Continue', "Continue"), result: ConfirmResult.CONTINUE };
+
+		const buttons: { label: string; result: ConfirmResult; }[] = [];
+		if (isWindows) {
+			buttons.push(submit, cancel);
+		} else if (isLinux) {
+			buttons.push(cancel, submit);
+		} else {
+			buttons.push(submit, cancel);
+		}
+
+		const options: Electron.MessageBoxOptions = {
+			title: this.environmentService.appNameLong,
+			message: localize('saveWorkspaceMessage', "Are you done with the test?"),
+			detail: localize('saveWorkspaceDetail', "If done then submit, otherwise continue"),
+			noLink: true,
+			type: 'warning',
+			buttons: buttons.map(button => button.label),
+			cancelId: buttons.indexOf(cancel)
+		};
+
+		if (isLinux) {
+			options.defaultId = 2;
+		}
+
+		return this.windowsMainService.showMessageBox(options, window).then(res => {
+			switch (buttons[res.button].result) {
+
+				// Cancel: veto unload
+				case ConfirmResult.CONTINUE:
+					return true;
+				// Save: save workspace, but do not veto unload
+				case ConfirmResult.SUBMIT: {
+					this.windowsMainService.quit();
+					return true;
+				}
+			}
+		});
+	}
 	promptToSaveUntitledWorkspace(window: ICodeWindow | undefined, workspace: IWorkspaceIdentifier): Promise<boolean> {
 		enum ConfirmResult {
 			SAVE,

@@ -436,14 +436,6 @@ MenuRegistry.appendMenuItem(MenuId.MenubarHelpMenu, {
 });
 
 // Tools
-MenuRegistry.appendMenuItem(MenuId.MenubarHelpMenu, {
-	group: '5_tools',
-	command: {
-		id: 'workbench.action.toggleDevTools',
-		title: nls.localize({ key: 'miToggleDevTools', comment: ['&& denotes a mnemonic'] }, "&&Toggle Developer Tools")
-	},
-	order: 1
-});
 
 MenuRegistry.appendMenuItem(MenuId.MenubarHelpMenu, {
 	group: '5_tools',
