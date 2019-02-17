@@ -297,7 +297,7 @@ export class CodeApplication extends Disposable {
 		}
 	}
 
-	startup(w: any): Promise<void> {
+	startup(): Promise<void> {
 		this.logService.debug('Starting VS Code');
 		this.logService.debug(`from: ${this.environmentService.appRoot}`);
 		this.logService.debug('args:', this.environmentService.args);
@@ -364,19 +364,7 @@ export class CodeApplication extends Disposable {
 
 		// Resolve unique machine ID
 		this.logService.trace('Resolving machine identifier...');
-		const resolvedMachineId = Promise.resolve(this.resolveMachineId());
-		// resolvedMachineId
-		// if (typeof resolvedMachineId === 'string') {
-		// 	return startupWithMachineId(resolvedMachineId);
-		// } else {
-		return resolvedMachineId.then(machineId => startupWithMachineId(machineId)).then((windows) => {
-			w && w.close();
-			return windows;
-		}).catch((err) => {
-			w && w.close();
-			return Promise.reject(err);
-		});
-		// }
+		return Promise.resolve(this.resolveMachineId()).then(machineId => startupWithMachineId(machineId));
 	}
 
 	private resolveMachineId(): string | Promise<string> {

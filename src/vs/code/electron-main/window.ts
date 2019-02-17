@@ -517,7 +517,7 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 		perf.mark('main:loadWindow');
 		this.bindURL = this.getUrl.bind(this, configuration);
 		this._win.loadURL(`${require.toUrl('vs/code/electron-browser/evaluation/test.html')}`);
-		this._win.webContents.openDevTools();
+		// this._win.webContents.openDevTools();
 		// Make window visible if it did not open in N seconds because this indicates an error
 		// Only do this when running out of sources and not when running tests
 		if (!this.environmentService.isBuilt && !this.environmentService.extensionTestsPath) {
