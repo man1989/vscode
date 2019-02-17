@@ -351,10 +351,10 @@ export class Workbench extends Disposable implements IPartService {
 
 		this.workbenchParams = { configuration, serviceCollection };
 
-		this.hasInitialFilesToOpen =
+		this.hasInitialFilesToOpen = !!(
 			(configuration.filesToCreate && configuration.filesToCreate.length > 0) ||
 			(configuration.filesToOpen && configuration.filesToOpen.length > 0) ||
-			(configuration.filesToDiff && configuration.filesToDiff.length > 0);
+			(configuration.filesToDiff && configuration.filesToDiff.length > 0));
 
 		this.registerErrorHandler();
 	}
@@ -943,7 +943,7 @@ export class Workbench extends Disposable implements IPartService {
 		}
 
 		const newMenubarVisibility = this.configurationService.getValue<MenuBarVisibility>(Workbench.menubarVisibilityConfigurationKey);
-		this.setMenubarVisibility(newMenubarVisibility, skipLayout);
+		this.setMenubarVisibility(newMenubarVisibility, !!skipLayout);
 	}
 
 	//#endregion
@@ -975,7 +975,7 @@ export class Workbench extends Disposable implements IPartService {
 			const activeControl = this.editorService.activeControl;
 			const visibleEditors = this.editorService.visibleControls;
 
-			textCompareEditorActive.set(activeControl && activeControl.getId() === TEXT_DIFF_EDITOR_ID);
+			textCompareEditorActive.set(!!activeControl && activeControl.getId() === TEXT_DIFF_EDITOR_ID);
 			textCompareEditorVisible.set(visibleEditors.some(control => control.getId() === TEXT_DIFF_EDITOR_ID));
 
 			if (visibleEditors.length > 0) {
@@ -1012,7 +1012,7 @@ export class Workbench extends Disposable implements IPartService {
 		const inputFocused = InputFocusedContext.bindTo(this.contextKeyService);
 
 		function activeElementIsInput(): boolean {
-			return document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA');
+			return !!document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA');
 		}
 
 		function trackInputFocus(): void {
@@ -1084,7 +1084,7 @@ export class Workbench extends Disposable implements IPartService {
 		}).then(() => mark('didRestoreEditors')));
 
 		// Restore Sidebar
-		let viewletIdToRestore: string;
+		let viewletIdToRestore: string | undefined;
 		if (!this.sideBarHidden) {
 			this.sideBarVisibleContext.set(true);
 
